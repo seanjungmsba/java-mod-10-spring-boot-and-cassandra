@@ -16,7 +16,7 @@ be applied to many other Database systems.
 Again, we will start with the simple baseling Spring Boot [application](https://spring.io/guides/gs/rest-service/). Pull this application
 down again, and start up a new IntelliJ project.
 
-``` shell
+``` text
 git clone https://github.com/spring-guides/gs-rest-service.git
 cd gs-rest-service
 git checkout 5cbc686 # To rollback to Spring Boot 2.6.x
@@ -24,10 +24,16 @@ git checkout 5cbc686 # To rollback to Spring Boot 2.6.x
 
 After launching the application, you should see the following again.
 
+``` text
+curl http://localhost:8080/greeting
+```
 ``` shell
-curl http://localhost:8080/greeting
 {"id":1,"content":"Hello, World!"}%
+```
+``` text
 curl http://localhost:8080/greeting
+```
+``` shell
 {"id":2,"content":"Hello, World!"}%
 ```
 
@@ -90,9 +96,6 @@ endpoint.
 import org.springframework.beans.factory.annotation.Autowired;
 ...
 
-    public Greeting greeting(...
-    ...
-
     @Autowired
     private CounterRepository counterRepository;
     
@@ -125,34 +128,87 @@ spring.data.cassandra.password=cassandra
 
 And in this case, we need to manually instantiate the Keyspace on the DB end.
 
-``` shell
+``` text
 docker exec -it cassandra-lab /bin/bash
 root@a03e783ff4fe:/# cqlsh
+```
+``` shell
 Connected to Test Cluster at 127.0.0.1:9042
 [cqlsh 6.0.0 | Cassandra 4.0.4 | CQL spec 3.4.5 | Native protocol v5]
 Use HELP for help.
+```
+``` text
 cqlsh> CREATE KEYSPACE IF NOT EXISTS spring_cassandra WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : '1' };
 ```
 
 You should be able to rerun the application now, and see that the new endpoint persists if you restart the application
 
+``` text
+curl "http://localhost:8080/greeting"
+```
 ``` shell
-curl "http://localhost:8080/greeting"
 {"id":1,"content":"Hello, World!"}%
+```
+``` text
 curl "http://localhost:8080/greeting"
+```
+``` shell
 {"id":2,"content":"Hello, World!"}%
+```
+``` text
 curl "http://localhost:8080/persistent_greeting"
+```
+``` shell
 {"id":1,"content":"Hello, World!"}%
+```
+``` text
 curl "http://localhost:8080/persistent_greeting"
+```
+``` shell
 {"id":2,"content":"Hello, World!"}%
-...
+```
+``` text
 # Restart application
 ...
 curl "http://localhost:8080/greeting"
+```
+``` shell
 {"id":1,"content":"Hello, World!"}%
+```
+``` text
 curl "http://localhost:8080/persistent_greeting"
+```
+``` shell
 {"id":3,"content":"Hello, World!"}%
 ```
 
 Go back and compare the database implementation here with what was done in the Postgres lab, you should see that they
 are more alike than different when being used through Spring Data.
+
+
+## Testing
+
+The following command will run the tests to validate that this environment was setup correctly. A screenshot of the successful tests can be uploaded as a submission.
+
+``` text
+docker run --network labnetwork -it --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd)/test:/test inspec-lab exec docker.rb
+```
+``` shell
+Profile:   tests from docker.rb (tests from docker.rb)
+Version:   (not specified)
+Target:    local://
+Target ID: 
+
+  ✔  Cassandra Running: Cassandra Docker instance is running
+     ✔  #<Inspec::Resources::DockerImageFilter:0x00005591c4982398> with repository == "cassandra" tag == "4.0.4" is expected to exist
+     ✔  #<Inspec::Resources::DockerContainerFilter:0x00005591c47c44c0> with names == "cassandra-lab" image == "cassandra:4.0.4" ports =~ /0.0.0.0:9042/ status is expected to match [/Up/]
+     ✔  Cassandra query: SELECT cluster_name FROM system.local output is expected to match /Test Cluster/
+  ✔  Cassandra Spring Keyspace: spring_cassandra Keyspace exists
+     ✔  Cassandra query: DESCRIBE KEYSPACE spring_cassandra output is expected not to match /not found/
+  ✔  Cassandra Counter Table: Counter Table exists
+     ✔  Cassandra query: SELECT name FROM spring_cassandra.counter output is expected to match /spring_counter/
+
+
+Profile Summary: 3 successful controls, 0 control failures, 0 controls skipped
+Test Summary: 5 successful, 0 failures, 0 skipped
+```
