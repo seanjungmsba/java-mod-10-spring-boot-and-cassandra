@@ -1,29 +1,25 @@
 package com.example.restservice.models;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import org.springframework.data.cassandra.core.mapping.PrimaryKey;
+import org.springframework.data.cassandra.core.mapping.Table;
 
-@Entity
+@Table
 public class Counter {
-    @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
-    private Long id;
+    @PrimaryKey
+    private String name;
+
     private Long count;
 
-    protected Counter() {}
-
-    public Counter(Long count) {
-        setCounter(count);
+    public Counter() {
     }
 
-    public Long getCounter() {
+    public Counter(Long count, String name) {
+        this.count = count;
+        this.name = name;
+    }
+
+    public Long incrementAndGet() {
+        this.count += 1;
         return count;
     }
-
-    public void setCounter(Long count) {
-        this.count = count;
-    }
-
 }
